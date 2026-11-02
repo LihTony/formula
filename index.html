@@ -291,7 +291,7 @@
                 >
                   <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path>
                   <circle cx="12" cy="10" r="3"></circle></svg
-                >г. Молодечно, ул. Грамадовская 20</a
+                >г. Молодечно, ул. Грамадовская 20 · 09:00–20:00</a
               >
             </div>
           </div>
@@ -365,7 +365,7 @@
             </div>
           </div>
         </section>
-        <section id="services" class="relative py-24 lg:py-32">
+        <section id="services" class="relative py-16 sm:py-24 lg:py-32">
           <div class="mx-auto max-w-7xl px-5 lg:px-8">
             <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div class="max-w-2xl">
@@ -381,7 +381,62 @@
                 От быстрой мойки до керамической защиты кузова. Выберите направление — и сразу увидите цену для своего типа кузова.
               </div>
             </div>
-            <div class="mt-14 grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            <div class="mt-8 grid gap-px overflow-hidden border border-border bg-border sm:hidden">
+              <button type="button" data-cat="wash" class="group relative flex w-full items-center gap-4 bg-background py-4 pl-5 pr-4 text-left transition-colors active:bg-surface">
+                <span class="absolute inset-y-0 left-0 w-0.5 bg-primary"></span>
+                <span class="grid size-12 shrink-0 place-items-center border border-primary/40 bg-primary/10 text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-droplets size-5" aria-hidden="true" > <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" ></path> <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" ></path></svg></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block font-display text-[0.95rem] font-bold uppercase leading-tight text-foreground">Мойка / Кузов</span>
+                  <span class="mt-1 block text-xs leading-snug text-muted-foreground">От экспресса до детейлинг-мойки</span>
+                </span>
+                <span class="shrink-0 text-right leading-none">
+                  <span class="block text-[0.65rem] uppercase tracking-wider text-muted-foreground">от</span>
+                  <span class="mt-1 block font-display text-xl font-bold text-primary">14<span class="ml-1 text-xs font-medium text-foreground">руб</span></span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-muted-foreground" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+              <button type="button" data-cat="interior" class="group relative flex w-full items-center gap-4 bg-background py-4 pl-5 pr-4 text-left transition-colors active:bg-surface">
+                <span class="absolute inset-y-0 left-0 w-0.5 bg-primary"></span>
+                <span class="grid size-12 shrink-0 place-items-center border border-primary/40 bg-primary/10 text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-spray-can size-5" aria-hidden="true" > <path d="M3 3h.01"></path> <path d="M7 5h.01"></path> <path d="M11 7h.01"></path> <path d="M3 7h.01"></path> <path d="M7 9h.01"></path> <path d="M3 11h.01"></path> <rect width="4" height="4" x="15" y="5"></rect> <path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2"></path> <path d="m13 14 8-2"></path> <path d="m13 19 8-2"></path></svg></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block font-display text-[0.95rem] font-bold uppercase leading-tight text-foreground">Уборка / Салон</span>
+                  <span class="mt-1 block text-xs leading-snug text-muted-foreground">Чистота, которую чувствуешь</span>
+                </span>
+                <span class="shrink-0 text-right leading-none">
+                  <span class="block text-[0.65rem] uppercase tracking-wider text-muted-foreground">от</span>
+                  <span class="mt-1 block font-display text-xl font-bold text-primary">15<span class="ml-1 text-xs font-medium text-foreground">руб</span></span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-muted-foreground" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+              <button type="button" data-cat="combo" class="group relative flex w-full items-center gap-4 bg-background py-4 pl-5 pr-4 text-left transition-colors active:bg-surface">
+                <span class="absolute inset-y-0 left-0 w-0.5 bg-primary"></span>
+                <span class="grid size-12 shrink-0 place-items-center border border-primary/40 bg-primary/10 text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-5" aria-hidden="true" > <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" ></path> <path d="M20 2v4"></path> <path d="M22 4h-4"></path> <circle cx="4" cy="20" r="2"></circle></svg></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block font-display text-[0.95rem] font-bold uppercase leading-tight text-foreground">Спецпредложения</span>
+                  <span class="mt-1 block text-xs leading-snug text-muted-foreground">Кузов + салон выгоднее</span>
+                </span>
+                <span class="shrink-0 text-right leading-none">
+                  <span class="block text-[0.65rem] uppercase tracking-wider text-muted-foreground">от</span>
+                  <span class="mt-1 block font-display text-xl font-bold text-primary">40<span class="ml-1 text-xs font-medium text-foreground">руб</span></span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-muted-foreground" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+              <button type="button" data-cat="extra" class="group relative flex w-full items-center gap-4 bg-background py-4 pl-5 pr-4 text-left transition-colors active:bg-surface">
+                <span class="absolute inset-y-0 left-0 w-0.5 bg-primary"></span>
+                <span class="grid size-12 shrink-0 place-items-center border border-primary/40 bg-primary/10 text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check size-5" aria-hidden="true" > <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" ></path> <path d="m9 12 2 2 4-4"></path></svg></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block font-display text-[0.95rem] font-bold uppercase leading-tight text-foreground">Дополнительно</span>
+                  <span class="mt-1 block text-xs leading-snug text-muted-foreground">Кузов и салон: защита и уход</span>
+                </span>
+                <span class="shrink-0 text-right leading-none">
+                  <span class="block text-[0.65rem] uppercase tracking-wider text-muted-foreground">от</span>
+                  <span class="mt-1 block font-display text-xl font-bold text-primary">5<span class="ml-1 text-xs font-medium text-foreground">руб</span></span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-muted-foreground" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+            </div>
+            <a href="#prices" class="sheen mt-4 inline-flex h-14 w-full items-center justify-center gap-2 bg-primary font-display text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground shadow-glow transition-all hover:bg-primary-glow active:scale-[0.98] sm:hidden">Рассчитать стоимость</a>
+            <div class="mt-14 hidden gap-px overflow-hidden border border-border bg-border sm:grid sm:grid-cols-2 lg:grid-cols-4">
               <button
                 type="button"
                 data-cat="wash"
@@ -922,6 +977,13 @@
                       class="mt-2 block font-display text-lg font-bold text-foreground transition-colors hover:text-primary"
                       >+375 (44) 558-18-89</a
                     >
+                  </div>
+                </div>
+                <div class="flex items-start gap-5 bg-background p-7">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock mt-1 size-5 shrink-0 text-primary" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                  <div>
+                    <span class="eyebrow text-muted-foreground">Время работы</span>
+                    <p class="mt-2 font-display text-lg font-bold text-foreground">09:00 – 20:00</p>
                   </div>
                 </div>
                 <div class="bg-background p-7">
@@ -1556,10 +1618,11 @@
                 </label>
                 <label class="block">
                   <span class="eyebrow mb-2 block text-muted-foreground">Желаемое время <span class="normal-case tracking-normal opacity-70">· по желанию</span></span>
-                  <input name="time" type="time" class="h-14 w-full rounded-none border border-border-strong bg-background px-4 text-base text-foreground focus-visible:border-primary focus-visible:outline-none" />
+                  <input name="time" type="time" min="09:00" max="20:00" step="900" class="h-14 w-full rounded-none border border-border-strong bg-background px-4 text-base text-foreground focus-visible:border-primary focus-visible:outline-none" />
+                  <span data-lead-err="time" class="mt-2 block text-xs text-primary" hidden></span>
                 </label>
               </div>
-              <p class="mt-2 text-xs leading-relaxed text-muted-foreground">День и время — ваше пожелание. Свободное окно и точную стоимость подтвердим по телефону.</p>
+              <p class="mt-2 text-xs leading-relaxed text-muted-foreground">Работаем с 09:00 до 20:00. День и время — ваше пожелание. Свободное окно и точную стоимость подтвердим по телефону.</p>
 
               <label class="mt-5 block">
                 <span class="eyebrow mb-2 block text-muted-foreground">Комментарий <span class="normal-case tracking-normal opacity-70">· по желанию</span></span>

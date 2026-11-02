@@ -84,6 +84,7 @@ if ($date !== '') {
     }
 }
 if ($time !== '' && !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) $errors['time'] = 'Некорректное время';
+elseif ($time !== '' && ($time < '09:00' || $time > '20:00')) $errors['time'] = 'Мы работаем с 09:00 до 20:00';
 if ($len($calc) > 1500) $errors['calc'] = 'Слишком длинный расчёт';
 $source = mb_substr($source, 0, 60, 'UTF-8');
 if ($errors) {

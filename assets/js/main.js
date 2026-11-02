@@ -578,7 +578,7 @@
   }
 
   function showLeadErrors(err) {
-    ['name', 'phone', 'date', 'comment'].forEach(function (k) {
+    ['name', 'phone', 'date', 'time', 'comment'].forEach(function (k) {
       var span = $('[data-lead-err=' + k + ']', leadForm);
       span.hidden = !err[k];
       span.textContent = err[k] || '';
@@ -687,6 +687,7 @@
     if (data.name.length < 2) err.name = 'Укажите имя';
     if (phoneDigits(data.phone).length !== 9) err.phone = 'Введите номер полностью: +375 (29) 123-45-67';
     if (data.date && data.date < today()) err.date = 'Выберите сегодняшний день или позже';
+    if (data.time && (data.time < '09:00' || data.time > '20:00')) err.time = 'Мы работаем с 09:00 до 20:00';
     if (data.comment.length > 1000) err.comment = 'Не более 1000 символов';
     showLeadErrors(err);
     var bad = Object.keys(err)[0];
