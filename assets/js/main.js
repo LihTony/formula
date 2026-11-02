@@ -237,7 +237,7 @@
 
     var html = '';
     if (!est.items.length) {
-      html = '<li class="text-sm text-muted-foreground">Отметьте услуги слева, чтобы рассчитать стоимость.</li>';
+      html = '<li class="text-sm text-muted-foreground">Отметьте услуги, чтобы рассчитать стоимость.</li>';
     } else {
       html = est.items.map(function (it) {
         return '<li class="flex items-start justify-between gap-3 text-sm"><span class="flex items-start gap-2 text-foreground">' +
@@ -260,6 +260,7 @@
     elRoof.setAttribute('data-state', state.roofRack ? 'checked' : 'unchecked');
     $('span', elRoof).setAttribute('data-state', state.roofRack ? 'checked' : 'unchecked');
     elBook.disabled = est.items.length === 0;
+    updateBar(est);
     return est;
   }
 
@@ -306,14 +307,42 @@
 
   renderBodies(); renderTabs(); renderGrid(); updateEstimate();
 
+  /* ---------- Телефон: маска +375 (XX) XXX-XX-XX ---------- */
+  // Национальная часть номера (9 цифр) без кода страны. Понимает +375…, 375…, 80…, 29…
+  function phoneDigits(v) {
+    var d = String(v).replace(/\D/g, '');
+    if (d.indexOf('375') === 0) d = d.slice(3);
+    else if (d.indexOf('80') === 0) d = d.slice(2);
+    return d.slice(0, 9);
+  }
+  // Разделители добавляются только когда есть следующая цифра, поэтому Backspace работает без «залипания»
+  function formatPhone(v) {
+    var d = phoneDigits(v), out = '+375 ';
+    if (!d.length) return out;
+    out += '(' + d.slice(0, 2);
+    if (d.length > 2) out += ') ' + d.slice(2, 5);
+    if (d.length > 5) out += '-' + d.slice(5, 7);
+    if (d.length > 7) out += '-' + d.slice(7, 9);
+    return out;
+  }
+  function bindPhone(input) {
+    input.addEventListener('input', function () {
+      var f = formatPhone(input.value);
+      if (input.value !== f) input.value = f;
+    });
+    input.addEventListener('focus', function () {
+      if (!phoneDigits(input.value).length) input.value = '+375 ';
+    });
+  }
+
   /* ---------- Форма записи ---------- */
-  var CALC_OPTION = 'По расчёту калькулятора';
   var CONSULT_OPTION = 'Нужна консультация';
   var PHONE_DEFAULT = '+375 ';
   var form = $('#bookingForm');
   var fName = form.elements['name'], fPhone = form.elements['phone'], fComment = form.elements['comment'];
   var svcTrigger = $('#svcTrigger'), svcValue = $('#svcValue'), svcList = $('#svcList'), svcInput = $('#svcInput');
   var FIELD_ERR = 'border-primary';
+  bindPhone(fPhone);
 
   /* Выпадающий список услуг */
   var ITEM = 'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
@@ -325,7 +354,7 @@
       return '<div role="option" id="svcOpt' + (options.length - 1) + '" data-value="' + esc(v) + '" aria-selected="false" class="' + ITEM + '">' + esc(v) +
         '<span class="absolute right-2 flex h-3.5 w-3.5 items-center justify-center" data-ind></span></div>';
     }
-    html += opt(CALC_OPTION) + opt(CONSULT_OPTION);
+    html += opt(CONSULT_OPTION);
     F.CATEGORIES.forEach(function (c) {
       html += '<div role="group" aria-label="' + esc(c.title) + '"><div class="eyebrow px-2 pb-1.5 pt-3 text-muted-foreground">' + esc(c.title) + '</div>' +
         c.services.map(function (s) { return opt(s.name); }).join('') + '</div>';
@@ -407,7 +436,7 @@
     if (name.length < 2) err.name = 'Укажите имя';
     else if (name.length > 60) err.name = 'Слишком длинное имя';
     if (phone.length > 25) err.phone = 'Проверьте номер';
-    else if (phone.replace(/\D/g, '').length < 9) err.phone = 'Укажите корректный телефон';
+    else if (phoneDigits(phone).length !== 9) err.phone = 'Введите номер полностью: +375 (29) 123-45-67';
     if (!d.service.trim()) err.service = 'Выберите услугу';
     if (comment.length > 1000) err.comment = 'Не более 1000 символов';
     return err;
@@ -460,16 +489,230 @@
     }).then(function () { setPending(false); });
   });
 
-  /* «Записаться с расчётом»: переносим расчёт в форму */
-  elBook.addEventListener('click', function () {
-    var est = F.calcEstimate(state.selected, state.body, state.roofRack);
-    var bodyLabel = F.BODY_TYPES[F.columnOf(state.body)].short;
-    var lines = ['Кузов: ' + bodyLabel]
+  /* ---------- Нижняя панель на телефоне ---------- */
+  var barEl = $('#mobileBar');
+  var barDefault = barEl && $('[data-bar=default]', barEl);
+  var barCalc = barEl && $('[data-bar=calc]', barEl);
+  var barTotal = $('#barTotal');
+  var pricesVisible = false;
+  // Пока открыт раздел с калькулятором и выбрана хотя бы одна услуга — вместо «Позвонить / Записаться» показываем итог
+  function updateBar(est) {
+    if (!barEl) return;
+    est = est || F.calcEstimate(state.selected, state.body, state.roofRack);
+    var show = pricesVisible && est.items.length > 0;
+    barDefault.hidden = show;
+    barCalc.hidden = !show;
+    if (show) barTotal.textContent = F.formatPrice(est.total, est.hasFrom);
+  }
+  if (barEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      pricesVisible = entries[0].isIntersecting;
+      updateBar();
+    }).observe($('#prices'));
+  }
+
+  /* ---------- Окно заявки (консультация · запись · запись с расчётом) ---------- */
+  var L_CONSULT = 'Нужна консультация';
+  var L_CALC_SERVICE = 'Запись по расчёту калькулятора';
+  var MODES = {
+    consult: {
+      title: 'Получить консультацию',
+      lead: 'Выберите услугу и оставьте контакты — перезвоним, ответим на вопросы и подберём удобное время.',
+      submit: 'Получить консультацию', service: true
+    },
+    booking: {
+      title: 'Записаться',
+      lead: 'Оставьте контакты — свяжемся, согласуем время визита и подтвердим стоимость.',
+      submit: 'Записаться', service: true
+    },
+    calc: {
+      title: 'Записаться с расчётом',
+      lead: 'Мы свяжемся, согласуем время визита и подтвердим итоговую стоимость.',
+      submit: 'Отправить заявку', service: false
+    }
+  };
+
+  var leadModal = $('#leadModal'), leadOverlay = $('#leadOverlay'), leadPanel = $('#leadPanel');
+  var leadForm = $('#leadForm'), leadDone = $('#leadDone'), leadErrorBox = $('#leadError');
+  var leadSel = $('#leadService'), leadSubmit = $('#leadSubmit');
+  var lead = { mode: 'consult', source: '', open: false, calc: null, pending: false, lastFocus: null, timer: null };
+  var LF = leadForm.elements;
+
+  // список услуг для выбора: из того же прайса, что и калькулятор
+  leadSel.innerHTML = '<option value="' + esc(L_CONSULT) + '">Не знаю — нужна консультация</option>' +
+    F.CATEGORIES.map(function (c) {
+      return '<optgroup label="' + esc(c.title) + '">' + c.services.map(function (s) {
+        return '<option value="' + esc(c.title + ' — ' + s.name) + '">' + esc(s.name) + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+
+  bindPhone(LF['phone']);
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+  function calcText() {
+    var est = lead.calc.est;
+    var lines = ['Кузов: ' + lead.calc.body]
       .concat(est.items.map(function (i) { return '• ' + i.service.name + ' — ' + F.formatPrice(i.price, i.service.from); }));
     if (est.roofRackApplied) lines.push('• Багажник на крыше — +' + F.ROOF_RACK_SURCHARGE + ' руб');
     lines.push('Итого: ' + F.formatPrice(est.total, est.hasFrom));
-    setService(CALC_OPTION);
-    fComment.value = lines.join('\n');
-    $('#booking').scrollIntoView({ behavior: 'smooth' });
+    return lines.join('\n');
+  }
+
+  function renderLeadSummary() {
+    var box = $('#leadSummary');
+    if (!lead.calc) { box.hidden = true; return; }
+    var est = lead.calc.est;
+    $('#leadSummaryBody').textContent = 'Кузов: ' + lead.calc.body;
+    var html = est.items.map(function (it) {
+      return '<li class="flex items-start justify-between gap-3"><span>' + esc(it.service.name) + '</span>' +
+        '<span class="shrink-0 font-display">' + F.formatPrice(it.price, it.service.from) + '</span></li>';
+    }).join('');
+    if (est.roofRackApplied) {
+      html += '<li class="flex justify-between gap-3 text-muted-foreground"><span>Багажник на крыше</span><span class="font-display">+' + F.ROOF_RACK_SURCHARGE + ' руб</span></li>';
+    }
+    $('#leadSummaryList').innerHTML = html;
+    $('#leadSummaryTotal').textContent = F.formatPrice(est.total, est.hasFrom);
+    box.hidden = false;
+  }
+
+  function showLeadErrors(err) {
+    ['name', 'phone', 'date', 'comment'].forEach(function (k) {
+      var span = $('[data-lead-err=' + k + ']', leadForm);
+      span.hidden = !err[k];
+      span.textContent = err[k] || '';
+      LF[k].style.borderColor = err[k] ? 'var(--primary)' : '';
+      if (err[k]) LF[k].setAttribute('aria-invalid', 'true'); else LF[k].removeAttribute('aria-invalid');
+    });
+  }
+
+  function openLead(mode, source) {
+    if (mode === 'calc') {
+      var est = F.calcEstimate(state.selected, state.body, state.roofRack);
+      if (est.items.length) lead.calc = { est: est, body: F.BODY_TYPES[F.columnOf(state.body)].short };
+      else { mode = 'consult'; lead.calc = null; }
+    } else {
+      lead.calc = null;
+    }
+    lead.mode = mode;
+    lead.source = source || '';
+    var cfg = MODES[mode];
+    $('#leadTitle').textContent = cfg.title;
+    $('#leadLead').textContent = cfg.lead;
+    $('#leadSubmitLabel').textContent = cfg.submit;
+    $('#leadServiceWrap').hidden = !cfg.service;
+    renderLeadSummary();
+    leadForm.hidden = false;
+    leadDone.hidden = true;
+    leadErrorBox.hidden = true;
+    showLeadErrors({});
+    LF['date'].min = today();
+    if (lead.open) return;
+
+    lead.lastFocus = document.activeElement;
+    if (menuOpen) setMenu(false);
+    clearTimeout(lead.timer);
+    leadModal.hidden = false;
+    leadOverlay.setAttribute('data-state', 'open');
+    leadPanel.setAttribute('data-state', 'open');
+    lockScroll(true);
+    lead.open = true;
+    // На телефоне не вызываем клавиатуру сразу — она закрыла бы половину формы
+    var fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    setTimeout(function () { (fine ? LF['name'] : leadPanel).focus(); }, 60);
+  }
+
+  function closeLead() {
+    if (!lead.open) return;
+    lead.open = false;
+    leadOverlay.setAttribute('data-state', 'closed');
+    leadPanel.setAttribute('data-state', 'closed');
+    lockScroll(false);
+    lead.timer = setTimeout(function () { leadModal.hidden = true; }, 250);
+    if (lead.lastFocus && lead.lastFocus.focus) lead.lastFocus.focus();
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-lead]');
+    if (t) {
+      e.preventDefault();
+      openLead(t.getAttribute('data-lead'), t.getAttribute('data-source'));
+      return;
+    }
+    if (e.target.closest && e.target.closest('[data-lead-close]')) closeLead();
   });
+  leadOverlay.addEventListener('click', closeLead);
+  document.addEventListener('keydown', function (e) {
+    if (!lead.open) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeLead(); return; }
+    if (e.key === 'Tab') {
+      var f = $$('a[href], button, input, select, textarea', leadPanel).filter(function (el) {
+        return !el.disabled && el.tabIndex >= 0 && !el.closest('[hidden]');
+      });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === leadPanel)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // кнопки калькулятора (в блоке «Ваш расчёт» и на нижней панели)
+  elBook.addEventListener('click', function () { openLead('calc', 'Калькулятор'); });
+  var barBook = $('#barBook');
+  if (barBook) barBook.addEventListener('click', function () { openLead('calc', 'Калькулятор — нижняя панель'); });
+
+  function setLeadPending(p) {
+    lead.pending = p;
+    leadSubmit.disabled = p;
+    $('#leadSubmitLabel').textContent = p ? 'Отправляем…' : MODES[lead.mode].submit;
+  }
+
+  leadForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (lead.pending) return;
+    var data = {
+      name: LF['name'].value.trim(),
+      phone: LF['phone'].value.trim(),
+      service: lead.mode === 'calc' ? L_CALC_SERVICE : (LF['service'].value || L_CONSULT),
+      car: LF['car'].value.trim(),
+      date: LF['date'].value,
+      time: LF['time'].value,
+      comment: LF['comment'].value.trim(),
+      calc: lead.mode === 'calc' && lead.calc ? calcText() : '',
+      source: lead.source,
+      website: LF['website'].value
+    };
+    var err = {};
+    if (data.name.length < 2) err.name = 'Укажите имя';
+    if (phoneDigits(data.phone).length !== 9) err.phone = 'Введите номер полностью: +375 (29) 123-45-67';
+    if (data.date && data.date < today()) err.date = 'Выберите сегодняшний день или позже';
+    if (data.comment.length > 1000) err.comment = 'Не более 1000 символов';
+    showLeadErrors(err);
+    var bad = Object.keys(err)[0];
+    if (bad) { LF[bad].focus(); return; }
+
+    leadErrorBox.hidden = true;
+    setLeadPending(true);
+    fetch('send.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (!res || !res.ok) throw new Error('failed');
+      leadForm.hidden = true;
+      leadDone.hidden = false;
+      $('#leadDoneTitle').textContent = lead.mode === 'consult' ? 'Заявка на консультацию отправлена' : 'Заявка отправлена';
+      LF['name'].value = ''; LF['car'].value = ''; LF['date'].value = ''; LF['time'].value = ''; LF['comment'].value = '';
+      LF['phone'].value = '+375 '; leadSel.value = L_CONSULT;
+      leadPanel.focus();
+      document.dispatchEvent(new CustomEvent('formula:lead', { detail: { mode: lead.mode, source: lead.source } }));
+    }).catch(function () {
+      leadErrorBox.hidden = false;
+      leadErrorBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }).then(function () { setLeadPending(false); });
+  });
+
+  updateBar();
+
 })();

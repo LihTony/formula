@@ -45,17 +45,47 @@ $name = $str('name');
 $phone = $str('phone');
 $service = $str('service');
 $comment = $str('comment');
+$car = $str('car');         // марка и модель (необязательно)
+$date = $str('date');       // желаемый день, YYYY-MM-DD (необязательно)
+$time = $str('time');       // желаемое время, HH:MM (необязательно)
+$calc = $str('calc');       // состав расчёта из калькулятора (необязательно)
+$source = $str('source');   // с какой кнопки пришла заявка
 
 // --- валидация (те же правила, что в assets/js/main.js)
 $len = static fn(string $s): int => mb_strlen($s, 'UTF-8');
 $errors = [];
 if ($len($name) < 2) $errors['name'] = 'Укажите имя';
 elseif ($len($name) > 60) $errors['name'] = 'Слишком длинное имя';
-if ($len($phone) > 25) $errors['phone'] = 'Проверьте номер';
-elseif (strlen(preg_replace('/\D/', '', $phone)) < 9) $errors['phone'] = 'Укажите корректный телефон';
+// Номер: белорусский — ровно 9 цифр после кода страны (375… / 80… / без кода). Иностранный — 10–15 цифр.
+$digits = preg_replace('/\D/', '', $phone);
+if ($len($phone) > 25) {
+    $errors['phone'] = 'Проверьте номер';
+} else {
+    if (strpos($digits, '375') === 0) $national = substr($digits, 3);
+    elseif (strpos($digits, '80') === 0) $national = substr($digits, 2);
+    elseif (strlen($digits) === 9) $national = $digits;
+    else $national = null;
+    $by_ok = $national !== null && strlen($national) === 9;
+    $foreign_ok = $national === null && strlen($digits) >= 10 && strlen($digits) <= 15;
+    if (!$by_ok && !$foreign_ok) {
+        $errors['phone'] = 'Укажите корректный телефон';
+    } elseif ($by_ok) {
+        $phone = '+375' . $national; // единый формат для менеджера: +375291234567
+    }
+}
 if ($service === '' ) $errors['service'] = 'Выберите услугу';
 elseif ($len($service) > 200) $errors['service'] = 'Слишком длинное значение';
 if ($len($comment) > 1000) $errors['comment'] = 'Не более 1000 символов';
+if ($len($car) > 80) $errors['car'] = 'Не более 80 символов';
+if ($date !== '') {
+    $dp = explode('-', $date);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !checkdate((int)$dp[1], (int)$dp[2], (int)$dp[0])) {
+        $errors['date'] = 'Некорректная дата';
+    }
+}
+if ($time !== '' && !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) $errors['time'] = 'Некорректное время';
+if ($len($calc) > 1500) $errors['calc'] = 'Слишком длинный расчёт';
+$source = mb_substr($source, 0, 60, 'UTF-8');
 if ($errors) {
     respond(['ok' => false, 'errors' => $errors], 422);
 }
@@ -75,6 +105,11 @@ if (count($hits) >= (int)$cfg['rate_limit_max']) {
 $hits[] = $now;
 @file_put_contents($rlFile, json_encode($hits), LOCK_EX);
 
+// желаемый визит одной строкой: «05.11.2026, 14:00» (или только день / только время)
+$when = '';
+if ($date !== '') { $when = date('d.m.Y', strtotime($date)); }
+if ($time !== '') { $when .= ($when !== '' ? ', ' : '') . $time; }
+
 // --- журнал заявок (резервная копия на случай сбоя Telegram)
 $logDir = __DIR__ . '/storage';
 if (!is_dir($logDir)) {
@@ -82,7 +117,7 @@ if (!is_dir($logDir)) {
 }
 $logged = (bool)@file_put_contents(
     $logDir . '/bookings.log',
-    json_encode(['time' => date('c'), 'ip' => $ip, 'name' => $name, 'phone' => $phone, 'service' => $service, 'comment' => $comment], JSON_UNESCAPED_UNICODE) . PHP_EOL,
+    json_encode(['time' => date('c'), 'ip' => $ip, 'name' => $name, 'phone' => $phone, 'service' => $service, 'car' => $car, 'when' => $when, 'calc' => $calc, 'source' => $source, 'comment' => $comment], JSON_UNESCAPED_UNICODE) . PHP_EOL,
     FILE_APPEND | LOCK_EX
 );
 
@@ -92,7 +127,11 @@ $text = "<b>Новая заявка — FORMULA Detailing</b>\n"
     . 'Имя: ' . $h($name) . "\n"
     . 'Телефон: ' . $h($phone) . "\n"
     . 'Услуга: ' . $h($service)
-    . ($comment !== '' ? "\nКомментарий: " . $h($comment) : '');
+    . ($car !== '' ? "\nАвто: " . $h($car) : '')
+    . ($when !== '' ? "\nЖелаемый визит: " . $h($when) : '')
+    . ($calc !== '' ? "\n\n<b>Расчёт с сайта</b>\n" . $h($calc) : '')
+    . ($comment !== '' ? "\n\nКомментарий: " . $h($comment) : '')
+    . ($source !== '' ? "\n\nОткуда: " . $h($source) : '');
 
 $delivered = false;
 if ($cfg['telegram_token'] !== '' && $cfg['telegram_chat_id'] !== '') {
@@ -116,7 +155,8 @@ if ($cfg['telegram_token'] !== '' && $cfg['telegram_chat_id'] !== '') {
 // --- e-mail (по желанию)
 if ($cfg['notify_email'] !== '') {
     $subject = '=?UTF-8?B?' . base64_encode('Новая заявка — FORMULA Detailing') . '?=';
-    $body = "Имя: $name\nТелефон: $phone\nУслуга: $service\nКомментарий: $comment\n";
+    $body = "Имя: $name\nТелефон: $phone\nУслуга: $service\nАвто: $car\nЖелаемый визит: $when\n"
+        . ($calc !== '' ? "Расчёт:\n$calc\n" : '') . "Комментарий: $comment\nОткуда: $source\n";
     $headers = 'From: ' . $cfg['mail_from'] . "\r\nContent-Type: text/plain; charset=UTF-8";
     $delivered = @mail($cfg['notify_email'], $subject, $body, $headers) || $delivered;
 }
